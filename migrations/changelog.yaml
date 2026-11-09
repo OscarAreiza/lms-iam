@@ -1,0 +1,93 @@
+# Flat Liquibase changelog — same simplification lms-workflow uses: this
+# schema lives inside lms-iam itself, not a separate `-db` repo (ADR-012).
+# Rollbacks are inline here rather than in separate .rollback.sql files.
+databaseChangeLog:
+  - changeSet:
+      id: iam-001
+      author: OscarAreiza
+      labels: "governance,ddl,schemas"
+      comment: "iam: this domain's own schema, never public"
+      changes:
+        - sqlFile:
+            path: 001_create_schema_iam.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "DROP SCHEMA IF EXISTS iam CASCADE;"
+  - changeSet:
+      id: iam-002
+      author: OscarAreiza
+      labels: "ADR-012,ddl,tables"
+      comment: "role: name + permission set"
+      changes:
+        - sqlFile:
+            path: 002_create_role_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "DROP TABLE IF EXISTS iam.role;"
+  - changeSet:
+      id: iam-003
+      author: OscarAreiza
+      labels: "ADR-012,ddl,tables"
+      comment: "role_assignment: one role per administrator"
+      changes:
+        - sqlFile:
+            path: 003_create_role_assignment_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "DROP TABLE IF EXISTS iam.role_assignment;"
+  - changeSet:
+      id: iam-004
+      author: OscarAreiza
+      labels: "governance,ddl,alter"
+      comment: "role_assignment.role_name -> role.name, ON DELETE RESTRICT"
+      changes:
+        - sqlFile:
+            path: 004_add_role_assignment_fk.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "ALTER TABLE iam.role_assignment DROP CONSTRAINT IF EXISTS fk_role_assignment_role;"
+  - changeSet:
+      id: iam-005
+      author: OscarAreiza
+      labels: "governance,ddl,indexes"
+      comment: "FK column index, rule 3"
+      changes:
+        - sqlFile:
+            path: 005_create_indexes.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "DROP INDEX IF EXISTS iam.idx_role_assignment_role_name;"
+  - changeSet:
+      id: iam-006
+      author: OscarAreiza
+      labels: "governance,dcl,roles"
+      comment: "iam_reader/iam_writer, NOLOGIN; writer granted to iam_app"
+      changes:
+        - sqlFile:
+            path: 006_create_roles_and_grants.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: |
+            REVOKE iam_writer FROM iam_app;
+            REVOKE ALL ON iam.role, iam.role_assignment FROM iam_reader, iam_writer;
+            REVOKE USAGE ON SCHEMA iam FROM iam_reader, iam_writer;
+            DROP ROLE IF EXISTS iam_reader;
+            DROP ROLE IF EXISTS iam_writer;
+  - changeSet:
+      id: iam-007
+      author: OscarAreiza
+      labels: "ADR-012,dml,seed"
+      comment: "seed the ADMINISTRATOR role (wildcard permission)"
+      changes:
+        - sqlFile:
+            path: 007_seed_administrator_role.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+      rollback:
+        - sql: "DELETE FROM iam.role WHERE name = 'ADMINISTRATOR';"
