@@ -49,12 +49,20 @@ locks anyone out; tightening it is a deliberate future decision, not a side effe
 RS256 (a real Administrator session, verified with `lms-access-api`'s public key) or HS256 (an
 internal service-to-service call). This service never holds the RS256 private key.
 
+## Internal caller allow-list (ADR-013)
+
+`GET /api/v1/iam/authorize` requires `sub` in `{membership-service, catalog-service,
+circulation-service}` (`middleware.RequireCaller`) — the three services expected to call it.
+Closes **SEC-03** from the week-13 threat model (T1/T2) for this route.
+
 ## Known integration gap
 
-No service calls `GET /api/v1/iam/authorize` yet. Wiring each caller's own middleware to make
-that call before a protected write is tracked as separate follow-up work per `ADR-012` — not
-part of standing this service up. Flagged here so it isn't silently assumed already wired up
-end-to-end.
+**As of 2026-11-10, no service calling this on `develop` yet.** Each caller's own middleware PR
+is still open (`lms-membership-api` #17/`feat/iam-authorization`, `lms-catalog-api` #15, same
+branch name, `lms-circulation-api` #12) — the allow-list above anticipates their real `sub`
+values (verified by reading those branches directly), but until those PRs merge, nothing on
+`develop` actually calls `GET /api/v1/iam/authorize`. Flagged here so it isn't silently assumed
+already wired up end-to-end.
 
 ## Migration scope
 
