@@ -39,7 +39,8 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Route("/api/v1/iam", func(api chi.Router) {
 		api.Use(middleware.RequireAuth(cfg.JWTPublicKey, cfg.InternalJWTSecret))
 
-		api.Get("/authorize", cfg.Authorize.Authorize)
+		api.With(middleware.RequireCaller("membership-service", "catalog-service", "circulation-service")).
+			Get("/authorize", cfg.Authorize.Authorize) // ADR-013: internal-only
 		api.Post("/assignments", cfg.Assignments.Assign)
 		api.Get("/roles", cfg.Roles.List)
 	})
