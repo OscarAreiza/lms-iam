@@ -38,9 +38,9 @@ func (f *fakeAssignmentRepository) Save(_ context.Context, a *iam.Assignment) er
 
 // fakeRoleRepository is an in-memory out.RoleRepository double.
 type fakeRoleRepository struct {
-	byName   map[string]*iam.Role
-	findErr  error
-	allErr   error
+	byName  map[string]*iam.Role
+	findErr error
+	allErr  error
 }
 
 func newFakeRoleRepository(roles ...*iam.Role) *fakeRoleRepository {
