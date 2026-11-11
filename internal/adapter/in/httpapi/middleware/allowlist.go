@@ -17,7 +17,7 @@ func RequireCaller(allowed ...string) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			caller := AdministratorID(r.Context())
+			caller := CallerID(r.Context())
 			if _, ok := allowedSet[caller]; !ok {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
